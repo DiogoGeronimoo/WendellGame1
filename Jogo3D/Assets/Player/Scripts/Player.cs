@@ -2,67 +2,76 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerPlatform : MonoBehaviour
+public class Player : MonoBehaviour
 {
+    private CharacterController controller;
+    private Transform cam;
+    private Animator anim;
 
-    public int velocidade;
-    public int forcaPulo;
-    public bool noAr, olhandoPraDireita;
-    public SpriteRenderer visual;
+    public float speed;
+    private Vector3 MoveDirecion;
+    public float gravity;
 
+    public float smoothRotTime;
 
+    private float turnSmoothVelocity;
     // Start is called before the first frame update
     void Start()
     {
-        
+        anim = GetComponent<Animator>();
+        controller = GetComponent<CharacterController>();
+        cam = Camera.main.transform;
+
     }
-
-
-
-
-    private void OnCollisionStay2D(Collision2D collision)
-    {
-        noAr = false;
-    }
-
-    private void OnCollisionExit2D(Collision2D collision)
-    {
-        noAr = true;
-    }
-
-
-
 
     // Update is called once per frame
     void Update()
     {
-        float x = Input.GetAxis("Horizontal");
+        Move();
+        GetMouseInput();
 
-        Vector3 inputTeclado = new Vector3(x, 0, 0);
-        transform.position += inputTeclado * velocidade * Time.deltaTime;
+    }
 
-
-        if (Input.GetKeyDown(KeyCode.Space) && !noAr)
+    void Move()
+    {
+        if (controller.isGrounded)
         {
-            Debug.Log("PRESSIONOU");
-            GetComponent<Rigidbody2D>().AddForce(Vector2.up * forcaPulo, ForceMode2D.Impulse);
+            float horizontal = Input.GetAxisRaw("Horizontal");
+            float vertical = Input.GetAxisRaw("Vertical");
+
+            Vector3 direcion = new Vector3(horizontal, 0f, vertical);
+
+            if (direcion.magnitude > 0)
+            {
+                float angle = Mathf.Atan2(direcion.x, direcion.z) * Mathf.Rad2Deg + cam.eulerAngles.y;
+                float smoothAngle = Mathf.SmoothDampAngle(transform.eulerAngles.y, angle, ref turnSmoothVelocity, smoothRotTime);
+                transform.rotation = Quaternion.Euler(0f, smoothAngle, 0f);
+                MoveDirecion = Quaternion.Euler(0f, angle, 0f) * Vector3.forward;
+                
+                anim.SetInteger("transition", 1);
+            }
+            else
+            {
+                anim.SetInteger("transition", 0);
+                MoveDirecion = Vector3.zero;
+
+            }
         }
+
+        MoveDirecion.y -= gravity * Time.deltaTime;
         
-        if(x < 0)
+        controller.Move(MoveDirecion * speed * Time.deltaTime);
+
+    }
+
+    void GetMouseInput()
+    {
+        if (controller.isGrounded)
         {
-            //olhando pra esquerda
-            visual.flipX = true;
-            olhandoPraDireita = false;
-
+            if (Input.GetMouseButtonDown(0))
+            {
+                anim.SetInteger("transition", 2);
+            }
         }
-        else if(x > 0)
-        {
-            //olhando pra direita
-            visual.flipX = false;
-            olhandoPraDireita = true;
-        }
-
-       
-
     }
 }
