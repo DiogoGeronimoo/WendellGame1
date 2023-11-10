@@ -1,18 +1,16 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class ObjColete : MonoBehaviour
 {
-    public int healthValue;
-
-    private void OnCollisionEnter2D(Collision2D col)
+    public string tag;
+    private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (col.gameObject.tag == "Player")
+        if (collision.CompareTag(tag))
         {
-            col.gameObject.GetComponent<Player>().increaseLife(healthValue);
-            Destroy(gameObject);
+            Destroy(collision.gameObject);//destruiu a moeda
+            //somar e atualizar o contador
         }
     }
 }
